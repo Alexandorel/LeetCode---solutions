@@ -1,0 +1,6 @@
+SELECT v.customer_id, COUNT(CASE WHEN t.visit_id IS NULL THEN 1 END) as count_no_trans
+FROM Visits v
+LEFT Join Transactions t
+ON v.visit_id = t.visit_id
+GROUP BY v.customer_id
+HAVING count_no_trans > 0;
