@@ -1,0 +1,5 @@
+SELECT user_id, name, mail
+FROM Users
+WHERE mail COLLATE utf8mb3_bin REGEXP '^[A-Za-z][A-Za-z0-9_.-]*@leetcode\\.com$';
+
+Am aplicat "COLLATE utf8mb3_bin" pentru a fi case-sensitive. Nu facea diferenta intre ".com" si ".COM"

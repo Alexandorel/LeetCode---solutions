@@ -1,0 +1,4 @@
+SELECT patient_id, patient_name, conditions
+FROM Patients
+WHERE CONCAT(SUBSTRING(conditions,1,5)) = 'DIAB1'
+    OR INSTR(conditions,' DIAB1') > 0
