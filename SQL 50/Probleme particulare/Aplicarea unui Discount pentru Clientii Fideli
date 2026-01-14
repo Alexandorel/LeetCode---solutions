@@ -1,0 +1,55 @@
+ENUNT:
+Avem următoarele tabele:
+
+Comenzi: (ID_Comanda (PK), ClientID, ValoareTotala)
+
+Clienti: (ClientID (PK), NumeClient, Email, ProcentDiscount)
+
+Cerință: Creează o procedură numită AplicaDiscountFidelitate care să facă următoarele:
+
+Să primească p_ClientID (INT).
+
+Să calculeze (folosind SUM) valoarea totală a tuturor comenzilor plasate de acel client până acum.
+
+Logică (Condiție):
+
+Dacă suma totală a comenzilor sale este mai mare de 5000 RON, atunci actualizează coloana ProcentDiscount din tabelul Clienti la 10% pentru acel client.
+
+Dacă suma este între 2000 și 5000 RON, actualizează discount-ul la 5%.
+
+Dacă suma este sub 2000 RON, discount-ul rămâne 0%.
+
+Dacă clientul nu are nicio comandă în tabel, procedura ar trebui să seteze discount-ul la 0 (sau să ignore).
+
+REZOLVARE:
+
+DELIMITER //
+CREATE PROCEDURE AplicaDiscountFidelitate(IN p_ClientID INT)
+
+BEGIN
+    DECLARE v_sumaTotala DECIMAL(10,2);
+
+    SELECT SUM(c.ValoareTotala) INTO v_sumaTotala
+    FROM Comenzi c
+    WHERE ClientID = p_ClientID
+
+    START TRANSACTION;
+
+    IF v_sumaTotala > 5000 THEN
+        UPDATE Clienti
+        SET ProcentDiscount = 10
+        WHERE ClientID = p_ClientID;
+    ELSEIF v_sumaTotala > 2000 and v_sumaTotala < 5000 THEN
+        UPDATE Clienti
+        SET ProcentDiscount = 5;
+        WHERE ClientID = p_ClientID;
+    ELSE 
+        UPDATE Clienti
+        SET ProcentDiscount = 0
+        WHERE ClientID = p_ClientID;
+    END IF;
+
+    COMMIT;
+
+END//
+DElIMITER ;

@@ -1,0 +1,67 @@
+ENUNT:
+Avem două tabele:
+
+Facturi: (ID_Factura (PK), ClientID, SumaTotala, Status) (Status poate fi 'Neplatit' sau 'Platit').
+
+ConturiClienti: (ClientID (PK), NumeClient, SoldDisponibil).
+
+Cerință: Creează o procedură numită PlatesteFactura care să realizeze următoarele:
+
+Să primească p_ID_Factura ca parametru.
+
+Să extragă (folosind JOIN) SumaTotala a facturii și SoldDisponibil al clientului care deține acea factură.
+
+Logică (Condiție):
+
+Dacă SoldDisponibil este mai mare sau egal cu SumaTotala:
+
+Începe o Tranzacție.
+
+Scade suma din ConturiClienti.
+
+Schimbă statusul facturii în 'Platit' în tabelul Facturi.
+
+Salvează totul (COMMIT).
+
+Dacă nu sunt destui bani, nu face nimic (sau poți afișa un mesaj).
+
+DELIMITER //
+
+CREATE PROCEDURE PlatesteFactura(
+    IN p_ID_Factura DECIMAL(10,2)
+)
+BEGIN
+    START TRANSACTION;
+        DECLARE v_suma_t DECIMAL(10,2);
+        DECLARE v_suma_d DECIMAL(10,2);
+        DECLARE v_client_id INT;
+
+        --Extragere date folosind JOIN
+        SELECT f.SumaTotala, c.SoldDisponibil, f.ClientID 
+        INTO v_suma_f, v_sold_c, v_client_id 
+        FROM Facturi f 
+        JOIN ConturiClienti c ON f.ClientID = c.ClientID 
+        WHERE f.ID_Factura = p_ID_Factura; 
+
+        START TRANSACTION;
+
+        IF v_sold_c < v_suma_f THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEST = 'Sold Insuficient';
+        ELSE
+            UPDATE ConturiClienti 
+            SET SoldDisponibil = SoldDisponibil - v_suma_f 
+            WHERE ClientID  = v_client_id;
+
+            UPDATE Facturi 
+            SET Status = 'Platit'
+            WHERE ID_Factura = p_ID_Factura;
+
+            COMMIT;
+        END IF;
+
+END//
+
+DELIMITER ;
+
+    
