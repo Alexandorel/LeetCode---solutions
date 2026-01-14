@@ -1,0 +1,65 @@
+Creati urmätoarele tabele intr-o baza de date (comenzi SQL):
+CLIENTI(IdClient,Nume,Prenume, Data Nasterii, Adresa,NrCreditCard)
+PRODUSE(idProdus,Categorie,Descriere, PretUnitar,Stoc)
+COS(IdCos,IdClient, IdProdus,Data, NumarBucati)
+Introduceti mai multe linii de date in aceste tabele (comenzi SQL)
+si scrieti o procedura stocata de realizare a tranzactiei de plata
+a produselor din "cos" de cätre un dlient.
+
+Istructiune SQL:
+
+CREATE DATABASE IF NOT EXISTS comenzi;
+USE comenzi;
+CREATE TABLE IF NOT EXISTS Clienti(
+	IdClient INT PRIMARY KEY,
+    Nume VARCHAR(50),
+    Prenume VARCHAR(50),
+    DataNasterii DATE,
+    Adresa VARCHAR(100),
+    NrCreditCard VARCHAR(19)
+);
+
+CREATE TABLE IF NOT EXISTS Produse(
+	IdProdus INT PRIMARY KEY,
+    Categorie VARCHAR(20),
+    Descriere VARCHAR(200),
+    PretUnitar DECIMAL(10,2),
+    Stoc INT
+);
+
+CREATE TABLE IF NOT EXISTS Cos(
+	IdClient INT,
+    IdProdus INT ,
+    Data DATE,
+    NumarBucati INT
+);
+
+DELIMITER //
+CREATE PROCEDURE tranzactie(in p_IdClient INT)
+    BEGIN
+        
+        START TRANSACTION;
+        
+        IF EXISTS(
+			SELECT 1
+            FROM Cos c
+            JOIN Produse p ON c.IdProdus = p.IdProdus
+            WHERE c.IdClient = p_IdClient 
+            AND c.NumarBucati > p.Stoc
+        )
+        THEN
+				ROLLBACK;
+                SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'stoc indisponibil';
+            
+        ELSE
+			UPDATE Produse p
+            JOIN Cos c ON p.IdProdus = c.IdProdus
+            SET p.Stoc = p.Stoc - c.NumarBucati
+            WHERE c.IdClient = p_IdClient;
+            
+            COMMIT;
+		END IF;
+            
+	END //
+    DELIMITER ;
